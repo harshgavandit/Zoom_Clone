@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  coturn:
+    image: instrumentisto/coturn
+    restart: unless-stopped
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "49152-65535:49152-65535/udp"
+    environment:
+      - REALM=localhost
+      - LISTEN_PORT=3478
+      - MIN_PORT=49152
+      - MAX_PORT=65535
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - REDIS_URL=redis://redis:6379
+      - TURN_URL=turn:coturn:3478
+      - PORT=8000
+    ports:
+      - "8000:8000"
+      - "20000-40000:20000-40000/udp"
+    depends_on:
+      - redis
+      - coturn
+    volumes:
+      - ./backend:/usr/src/app
+    command: ["node", "src/app.js"]

@@ -17,9 +17,52 @@ import { Snackbar } from '@mui/material';
 
 
 
-// TODO remove, this demo shouldn't need to reset the theme.
-
-const defaultTheme = createTheme();
+const defaultTheme = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#006aff',
+        },
+        background: {
+            default: '#060913',
+            paper: '#0d1224',
+        },
+    },
+    typography: {
+        fontFamily: "'Outfit', sans-serif",
+    },
+    components: {
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    backgroundColor: 'rgba(13, 18, 36, 0.75) !important',
+                    backdropFilter: 'blur(16px)',
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+                }
+            }
+        },
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    borderRadius: '10px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    padding: '8px 16px',
+                }
+            }
+        },
+        MuiTextField: {
+            styleOverrides: {
+                root: {
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: '10px',
+                        backgroundColor: 'rgba(25, 33, 61, 0.3)',
+                    }
+                }
+            }
+        }
+    }
+});
 
 export default function Authentication() {
 
@@ -76,10 +119,7 @@ export default function Authentication() {
                     sm={4}
                     md={7}
                     sx={{
-                        backgroundImage: 'url(https://source.unsplash.com/random?wallpapers)',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundColor: (t) =>
-                            t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
+                        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                     }}
@@ -99,14 +139,34 @@ export default function Authentication() {
                         </Avatar>
 
 
-                        <div>
-                            <Button variant={formState === 0 ? "contained" : ""} onClick={() => { setFormState(0) }}>
+                        <Box sx={{ display: 'flex', gap: 1, background: 'rgba(255, 255, 255, 0.05)', p: 0.5, borderRadius: '12px', mb: 3, width: '100%' }}>
+                            <Button 
+                                variant={formState === 0 ? "contained" : "text"} 
+                                sx={{ 
+                                    flex: 1, 
+                                    boxShadow: formState === 0 ? '0 4px 12px rgba(0,106,255,0.3)' : 'none',
+                                    bgcolor: formState === 0 ? 'primary.main' : 'transparent',
+                                    color: formState === 0 ? 'white' : 'text.secondary',
+                                    '&:hover': { bgcolor: formState === 0 ? 'primary.dark' : 'rgba(255,255,255,0.05)' }
+                                }} 
+                                onClick={() => { setFormState(0) }}
+                            >
                                 Sign In
                             </Button>
-                            <Button variant={formState === 1 ? "contained" : ""} onClick={() => { setFormState(1) }}>
+                            <Button 
+                                variant={formState === 1 ? "contained" : "text"} 
+                                sx={{ 
+                                    flex: 1,
+                                    boxShadow: formState === 1 ? '0 4px 12px rgba(0,106,255,0.3)' : 'none',
+                                    bgcolor: formState === 1 ? 'primary.main' : 'transparent',
+                                    color: formState === 1 ? 'white' : 'text.secondary',
+                                    '&:hover': { bgcolor: formState === 1 ? 'primary.dark' : 'rgba(255,255,255,0.05)' }
+                                }} 
+                                onClick={() => { setFormState(1) }}
+                            >
                                 Sign Up
                             </Button>
-                        </div>
+                        </Box>
 
                         <Box component="form" noValidate sx={{ mt: 1 }}>
                             {formState === 1 ? <TextField
