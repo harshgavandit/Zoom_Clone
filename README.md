@@ -363,19 +363,7 @@ Zoom_Clone/
 └── README.md                 # This file
 ```
 
----
 
-## 🎬 Demo Flow (5 Minutes)
-
-1. **Landing** (30s): Show smooth animations
-2. **Create Room** (30s): Login and create a test room
-3. **Video Test** (1m): Enable video/audio, show controls
-4. **Chat** (30s): Send messages, add emoji reactions
-5. **Host Controls** (30s): Mute all, lock room, view participants
-6. **Metrics** (30s): Show real-time bitrate/latency
-7. **Screen Share** (30s): Share screen, show in meeting
-
----
 
 ## 🚀 Production Deployment
 
