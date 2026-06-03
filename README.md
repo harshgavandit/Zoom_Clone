@@ -125,4 +125,64 @@ If you'd like, I can:
 2. Draft a shorter quick-start README landing section for contributors.
 3. Add a checklist for production hardening and deployment.
 
+<<<<<<< HEAD
 Tell me which of these you'd like me to do next.
+=======
+
+
+## 🚀 Production Deployment
+
+Before deploying to production:
+
+1. Set strong JWT secret in .env
+2. Configure MongoDB connection to managed service
+3. Set Redis connection to managed service
+4. Enable HTTPS/TLS on your domain
+5. Configure TURN server credentials
+6. Set up SSL certificates
+7. Enable rate limiting on API endpoints
+8. Configure backups for recordings and database
+
+For full production checklist, see Docker Hub deployment documentation.
+
+---
+
+## 📞 Support
+
+**For issues:**
+1. Check troubleshooting section above
+2. Verify all prerequisites are installed
+3. Check .env configuration
+4. Review browser console for errors
+5. Check backend logs: `docker-compose logs backend`
+
+**For Docker logs:**
+```bash
+# View all logs
+docker-compose logs -f
+
+# View specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f redis
+```
+
+---
+
+## 📄 License
+
+ISC License - See LICENSE file for details
+
+---
+
+## ✨ Credits
+
+Built as a professional hackathon project demonstrating:
+- Advanced WebRTC architecture (SFU)
+- Production-grade security practices
+- Enterprise-level features (analytics, accessibility)
+- Professional UI/UX design
+- Scalable infrastructure patterns
+
+**Ready for deployment. Built to win.** 🏆
+>>>>>>> b5e23a55c14e98a88ed2ebfdfdfc959ca78ecc6f
