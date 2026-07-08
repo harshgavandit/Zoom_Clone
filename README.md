@@ -2,7 +2,7 @@
 
 This repository implements a prototype Zoom-like video conferencing application using a React frontend and a Node.js/Express backend. It uses Mediasoup as an SFU for scalable video forwarding, Socket.IO for signaling, MongoDB for persistence, and Redis/Coturn for scaling and NAT traversal.
 
-This README was updated after scanning the codebase; it corrects run instructions, enumerates the main modules, and calls out a missing `.env.example` referenced in older docs.
+Live Link - https://zoom-clone-xkdj.onrender.com/
 
 ## Status from code scan
 
