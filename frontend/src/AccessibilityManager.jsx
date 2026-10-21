@@ -14,9 +14,9 @@ import {
   DialogContent,
   Divider,
 } from '@mui/material';
-import AccessibleIcon from '@mui/icons-material/Accessible';
-import ClosedCaptionIcon from '@mui/icons-material/ClosedCaption';
-import FormatTextIcon from '@mui/icons-material/FormatText';
+import { Accessible as AccessibleIcon } from '@mui/icons-material';
+import { ClosedCaption as ClosedCaptionIcon } from '@mui/icons-material';
+import { FormatText as FormatTextIcon } from '@mui/icons-material';
 
 export default function AccessibilityManager() {
   const [open, setOpen] = useState(false);

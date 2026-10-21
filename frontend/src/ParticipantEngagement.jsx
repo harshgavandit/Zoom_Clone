@@ -11,9 +11,9 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
+import { EmojiEvents as EmojiEventsIcon } from '@mui/icons-material';
 
 export default function ParticipantEngagement({ isOpen, onClose, participants, metrics }) {
   const [engagementRanks, setEngagementRanks] = useState([]);

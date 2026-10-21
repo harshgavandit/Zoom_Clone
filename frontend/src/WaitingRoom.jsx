@@ -15,10 +15,10 @@ import {
   IconButton,
   Chip,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import LockIcon from '@mui/icons-material/Lock';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { Cancel as CancelIcon } from '@mui/icons-material';
+import { Lock as LockIcon } from '@mui/icons-material';
+import { VolumeOff as VolumeOffIcon } from '@mui/icons-material';
 
 export default function WaitingRoom({
   open,

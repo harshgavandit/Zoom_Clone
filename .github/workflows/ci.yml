@@ -1,0 +1,53 @@
+name: Application checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: zoom_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d zoom_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/zoom_test
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix frontend
+      - name: Check server syntax
+        run: npm run check
+      - name: Test direct frontend routes
+        run: npm --prefix frontend test
+      - name: Test API and meetings across two server instances
+        run: npm test
+      - name: Build production frontend
+        run: npm run build
+      - name: Audit active backend dependencies
+        run: npm audit --audit-level=moderate
+      - name: Audit frontend and build dependencies
+        run: npm audit --prefix frontend --audit-level=moderate

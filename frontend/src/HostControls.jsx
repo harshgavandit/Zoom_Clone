@@ -17,10 +17,10 @@ import {
   ListItemText,
   ListItemSecondaryAction,
 } from '@mui/material';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
-import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
-import LockIcon from '@mui/icons-material/Lock';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { VolumeOff as VolumeOffIcon } from '@mui/icons-material';
+import { PersonRemove as PersonRemoveIcon } from '@mui/icons-material';
+import { Lock as LockIcon } from '@mui/icons-material';
 import RecordingIndicator from './RecordingIndicator';
 
 export default function HostControls({

@@ -1,11 +1,11 @@
 // ParticipantBadges.jsx - Show badges for host, speaker, presenting, etc
 import React from 'react';
 import { Box, Chip, Tooltip } from '@mui/material';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import PresentToAllIcon from '@mui/icons-material/PresentToAll';
-import MicOffIcon from '@mui/icons-material/MicOff';
-import VideocamOffIcon from '@mui/icons-material/VideocamOff';
+import { AdminPanelSettings as AdminPanelSettingsIcon } from '@mui/icons-material';
+import { GraphicEq as GraphicEqIcon } from '@mui/icons-material';
+import { PresentToAll as PresentToAllIcon } from '@mui/icons-material';
+import { MicOff as MicOffIcon } from '@mui/icons-material';
+import { VideocamOff as VideocamOffIcon } from '@mui/icons-material';
 
 export function ParticipantBadges({ participant }) {
   if (!participant) return null;

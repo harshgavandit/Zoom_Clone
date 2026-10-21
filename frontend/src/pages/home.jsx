@@ -2,8 +2,9 @@ import React, { useContext, useState } from 'react'
 import withAuth from '../utils/withAuth'
 import { useNavigate } from 'react-router-dom'
 import "../App.css";
-import { Button, IconButton, TextField } from '@mui/material';
-import RestoreIcon from '@mui/icons-material/Restore';
+import { Button, TextField } from '@mui/material';
+import { errorMessage } from '../utils/api';
+import { Restore as RestoreIcon } from '@mui/icons-material';
 import { AuthContext } from '../contexts/AuthContext';
 
 function HomeComponent() {
@@ -13,10 +14,16 @@ function HomeComponent() {
     const [meetingCode, setMeetingCode] = useState("");
 
 
-    const {addToUserHistory} = useContext(AuthContext);
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+    const {addToUserHistory, handleLogout} = useContext(AuthContext);
     let handleJoinVideoCall = async () => {
-        await addToUserHistory(meetingCode)
-        navigate(`/${meetingCode}`)
+        const code = meetingCode.trim();
+        if (!/^[a-zA-Z0-9_-]{3,80}$/.test(code)) { setError('Use 3–80 letters, digits, hyphens, or underscores.'); return; }
+        setBusy(true); setError('');
+        try { await addToUserHistory(code); navigate(`/${code}`); }
+        catch (error) { setError(errorMessage(error)); }
+        finally { setBusy(false); }
     }
 
     return (
@@ -37,14 +44,11 @@ function HomeComponent() {
 
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <Button variant="text" onClick={() => navigate('/recordings')} sx={{ color: 'text.secondary' }}>Recordings</Button>
-                        <Button 
-                            variant="outlined" 
+                        <Button
+                            variant="outlined"
                             color="error"
                             sx={{ borderRadius: '10px', px: 2, py: 0.5 }}
-                            onClick={() => {
-                                localStorage.removeItem("token")
-                                navigate("/auth")
-                            }}
+                            onClick={() => handleLogout().catch(() => {})}
                         >
                             Logout
                         </Button>
@@ -56,20 +60,22 @@ function HomeComponent() {
                 <div className="leftPanel">
                     <div>
                         <h2>High quality video calls. Simple, reliable, and secure.</h2>
-                        
+
                         <div className="join-card">
+                            <p role="alert" style={{ color: '#fca5a5' }}>{error}</p>
                             <h3 style={{ marginBottom: '1.2rem', fontWeight: 600, fontSize: '1.3rem' }}>Join or Start a Meeting</h3>
+                            <Button onClick={() => setMeetingCode(crypto.randomUUID())}>Generate a private meeting code</Button>
                             <div style={{ display: 'flex', gap: "12px", alignItems: 'center' }}>
-                                <TextField 
+                                <TextField
                                     fullWidth
                                     size="small"
-                                    onChange={e => setMeetingCode(e.target.value)} 
-                                    id="outlined-basic" 
-                                    label="Enter Meeting Code" 
-                                    variant="outlined" 
+                                    onChange={e => setMeetingCode(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleJoinVideoCall(); }}
+                                    id="outlined-basic"
+                                    label="Enter Meeting Code"
+                                    variant="outlined"
                                 />
-                                <Button 
-                                    onClick={handleJoinVideoCall} 
+                                <Button
+                                    onClick={handleJoinVideoCall} disabled={busy}
                                     variant='contained'
                                     sx={{ py: 1.1, px: 3, whiteSpace: 'nowrap' }}
                                 >
@@ -79,7 +85,7 @@ function HomeComponent() {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className='rightPanel'>
                     <img src='/logo3.png' alt="Video Conferencing illustration" />
                 </div>

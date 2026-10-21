@@ -11,8 +11,8 @@ import {
   AvatarGroup,
   Tooltip,
 } from '@mui/material';
-import MicIcon from '@mui/icons-material/Mic';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Mic as MicIcon } from '@mui/icons-material';
+import { Visibility as VisibilityIcon } from '@mui/icons-material';
 
 export default function ParticipantDetector({ 
   participants = [], 

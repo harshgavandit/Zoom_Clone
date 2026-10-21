@@ -9,7 +9,7 @@ export default function VideoMeetMediasoup() {
   const remoteVideosRef = useRef(new Map());
 
   useEffect(() => {
-    const signalingUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+    const signalingUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
     const c = new MediasoupClient({ url: signalingUrl, roomId: roomId || 'demo-room' });
     setClient(c);
 

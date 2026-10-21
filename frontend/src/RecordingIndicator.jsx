@@ -1,7 +1,7 @@
 // RecordingIndicator.jsx - Simple recording indicator with animation
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import { FiberManualRecord as FiberManualRecordIcon } from '@mui/icons-material';
 
 export default function RecordingIndicator() {
   return (

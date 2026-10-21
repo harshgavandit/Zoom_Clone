@@ -13,10 +13,10 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import TuneIcon from '@mui/icons-material/Tune';
-import CloseIcon from '@mui/icons-material/Close';
-import WarningIcon from '@mui/icons-material/Warning';
+import { AutoFixHigh as AutoFixHighIcon } from '@mui/icons-material';
+import { Tune as TuneIcon } from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { Warning as WarningIcon } from '@mui/icons-material';
 
 export default function PerformanceDashboard({
   stats,

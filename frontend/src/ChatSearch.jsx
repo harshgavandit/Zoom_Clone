@@ -12,8 +12,8 @@ import {
   Paper,
   Highlighter,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import ClearIcon from '@mui/icons-material/Clear';
+import { Search as SearchIcon } from '@mui/icons-material';
+import { Clear as ClearIcon } from '@mui/icons-material';
 
 export default function ChatSearch({ messages = [] }) {
   const [searchQuery, setSearchQuery] = useState('');

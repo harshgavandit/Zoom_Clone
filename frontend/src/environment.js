@@ -1,8 +1,2 @@
-let IS_PROD = true;
-const server = IS_PROD ?
-    "https://apnacollegebackend.onrender.com" :
-
-    "http://localhost:8000"
-
-
+const server = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
 export default server;

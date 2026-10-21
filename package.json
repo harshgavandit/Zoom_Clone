@@ -1,0 +1,22 @@
+{
+  "name": "apna-video-call",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "22.x" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env.local server/index.js",
+    "build": "npm --prefix frontend run build",
+    "test": "node --env-file-if-exists=.env.local --test tests/*.test.js",
+    "test:live": "node --env-file-if-exists=.env.local scripts/smoke.mjs",
+    "check": "node --check server/app.js"
+  },
+  "dependencies": {
+    "@socket.io/postgres-adapter": "^0.5.0",
+    "bcryptjs": "^3.0.2",
+    "express": "^4.22.2",
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": { "socket.io-client": "^4.8.3" }
+}

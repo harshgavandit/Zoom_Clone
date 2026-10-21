@@ -128,7 +128,7 @@
     height: 100%;
     object-fit: cover;
     border-radius: 16px;
-    transform: scaleX(-1); /* Mirror camera feed */
+    transform: none;
 }
 
 /* Overlay tags on video tiles */
@@ -437,4 +437,23 @@
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.inviteButton { position: fixed !important; top: 4px; right: 12px; z-index: 60; }
+.connectionStatus { padding-right: 150px; }
+.videoGridContainer { min-width: 0; padding-top: 44px; }
+.lobbyFormContainer { min-width: 0; }
+.buttonContainers { max-width: calc(100vw - 24px); gap: 8px; padding: 8px 12px; flex-wrap: wrap; justify-content: center; }
+.whiteboardCanvas { min-height: 0; }
+@media (max-width: 700px) {
+  .lobbyContainer { padding: 60px 16px 24px; }
+  .lobbyCard { padding: 20px; gap: 20px; }
+  .meetVideoContainer { height: 100dvh; }
+  .videoGridContainer { padding: 48px 10px 160px; }
+  .videoGrid { grid-template-columns: 1fr; gap: 8px; max-height: calc(100dvh - 210px); min-width: 0; }
+  .buttonContainers { bottom: 12px; width: calc(100vw - 24px); gap: 4px; border-radius: 16px; }
+  .chatRoom, .participantsDrawer { position: absolute; inset: 44px 0 155px; width: 100%; height: auto; z-index: 90; }
+  .whiteboardOverlay { inset: 44px 10px 160px; }
+  .whiteboardHeader { padding: 12px; gap: 8px; flex-wrap: wrap; }
+  .connectionStatus { font-size: 11px !important; max-width: 100%; }
 }

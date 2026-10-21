@@ -1,10 +1,10 @@
 // EmptyStates.jsx - Beautiful empty state UI components
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import VideocamOffIcon from '@mui/icons-material/VideocamOff';
-import StorageIcon from '@mui/icons-material/Storage';
+import { PeopleAlt as PeopleAltIcon } from '@mui/icons-material';
+import { ChatBubbleOutline as ChatBubbleOutlineIcon } from '@mui/icons-material';
+import { VideocamOff as VideocamOffIcon } from '@mui/icons-material';
+import { Storage as StorageIcon } from '@mui/icons-material';
 
 export function EmptyParticipants({ onInvite }) {
   return (

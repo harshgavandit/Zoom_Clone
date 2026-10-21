@@ -1,188 +1,98 @@
-# 🎥 Zoom Clone — Mediasoup SFU Video Conferencing (Repository Overview)
+# Apna Video Call
 
-This repository implements a prototype Zoom-like video conferencing application using a React frontend and a Node.js/Express backend. It uses Mediasoup as an SFU for scalable video forwarding, Socket.IO for signaling, MongoDB for persistence, and Redis/Coturn for scaling and NAT traversal.
+A React video-meeting app deployed on Vercel, with an Express API and Socket.IO signaling on Vercel Functions. Accounts, sessions, meeting history, and recent chat use a dedicated Neon Postgres database provisioned through Vercel Marketplace.
 
-Live Link - https://zoom-clone-xkdj.onrender.com/
+**Live app:** https://zoom-clone-blue-pi.vercel.app
 
-## Status from code scan
+## What works
 
-- Backend: Node.js + Express (ES modules). Entry: `backend/src/app.js` — initializes Mediasoup workers and Socket.IO.
-- Frontend: Create React App. Entry: `frontend/src/index.js` → `App.js`. Mediasoup meeting UI: `frontend/src/pages/VideoMeetMediasoup.jsx`.
-- Docker Compose: `docker-compose.yml` defines `redis`, `coturn`, and `backend` services. Frontend is expected to run separately during development.
-- Note: `.env.example` referenced in older README was not found in the repository — create `backend/.env` manually (see sample below).
+- Register, sign in, refresh sessions, and sign out with server-side revocation.
+- Start a guest meeting or join with a meeting code, then copy the invite link.
+- Peer-to-peer audio/video, camera and microphone toggles, and screen sharing.
+- Chat, participant presence, raised hands, emoji reactions, and shared whiteboard drawing/clearing.
+- Meeting history for signed-in users.
+- Browser screen recording with a local video download and a list of downloads made in that browser.
+- Responsive desktop and mobile layouts, direct URL navigation, and automatic signaling reconnection.
 
----
+Meetings are intended for small groups, with a six-participant admission check. Anyone with the meeting link can join. Generate a random meeting code for a private invitation.
 
-## Quick Feature Summary
+## Architecture
 
-- Mediasoup-based SFU prototype (workers, routers, transports, produce/consume handlers).
-- Real-time chat, emoji reactions, host controls, hand-raise, screen sharing signaling.
-- Server-side recording helpers (FFmpeg integration expected in `recording_recorder.js`).
-- Authentication endpoints and JWT-based tokens with refresh support.
-
----
-
-## Prerequisites
-
-- Node.js 18+ for local development (backend uses ES modules).
-- npm 9+.
-- Docker + Docker Compose (recommended for backend services like Redis and Coturn).
-- MongoDB instance (local or managed). The compose file does not start MongoDB — provide `MONGO_URL`.
-
-## Sample backend `.env` (create `backend/.env`)
-
-```
-MONGO_URL=mongodb://localhost:27017/zoom_clone
-REDIS_URL=redis://localhost:6379
-PORT=8000
-JWT_SECRET=replace_with_a_strong_secret
-TURN_URL=turn:coturn:3478
+```text
+Browser React/Vite app -> Vercel CDN
+  REST requests        -> Vercel Function (Express) -> Postgres
+  WebSocket signaling  -> Vercel Function (Socket.IO)
+                            <-> Postgres LISTEN/NOTIFY adapter
+  Audio/video          <-> Other meeting participants via WebRTC
 ```
 
-(Save secrets securely; do not commit `.env`.)
+Vercel Functions support WebSockets with Fluid compute. The client connects directly over WebSocket at `/api/index`, avoiding HTTP polling and sticky-session requirements. The Postgres adapter forwards room events between independent function instances. Participant presence uses expiring Postgres leases, with an atomic room-capacity check and a per-tab reconnect identity; joining does not wait for suspended function instances. When a function reaches its maximum duration, the client reconnects and rejoins the room; peer media may briefly renegotiate.
 
----
+The deployment uses the existing app's peer-to-peer meeting flow. The original `backend/` Mediasoup/MongoDB prototype is retained as reference and is excluded from Vercel deployment. `/ms/:roomId` opens the supported peer-to-peer meeting UI for the same room code. This deployment does not run a native SFU, Coturn, Redis, or FFmpeg worker.
 
-## Run with Docker (recommended for backend services)
+## Local setup
 
-1. Start Redis and Coturn via compose and the backend service (frontend runs locally in dev):
+Use Node.js 22.22.2 or newer in the 22.x line (Vercel uses Node 22). From the repository root:
 
 ```powershell
-docker-compose up --build
-```
-
-2. The `backend` service will be available on `http://localhost:8000` by default.
-
-Note: The compose file mounts `./backend` into the container so file changes are reflected immediately.
-
----
-
-## Local Development (separate frontend/backends)
-
-Backend
-
-```powershell
-cd backend
-npm install
-# create backend/.env as above
-npm run dev    # uses nodemon to run src/app.js
-```
-
-Frontend
-
-```bash
-cd frontend
-npm install
+npm ci
+npm ci --prefix frontend
+npx vercel link
+npx vercel env pull .env.local
+npm run build
 npm start
 ```
 
-Frontend dev server runs on `http://localhost:3000` by default. The mediasoup client pages use `process.env.REACT_APP_BACKEND_URL` or the same origin.
+Open http://localhost:8000. The one server serves the production frontend and API. For frontend hot reload, leave the backend running and use `npm --prefix frontend start` in a second terminal; Vite proxies `/api` to port 8000.
 
----
+The ignored `.env.local` must contain the dedicated database connection. Use `DATABASE_URL_UNPOOLED` for Socket.IO LISTEN/NOTIFY; a transaction-pooler URL does not support its persistent listeners. TLS certificate verification remains enabled. The server creates its tables idempotently on first use.
 
-## Important Code Locations
+The application hashes passwords with bcrypt and stores only SHA-256 hashes of random access/refresh tokens. No signing secret or development authentication fallback is required. Authentication requests have a shared database-backed rate limit.
 
-- `backend/src/app.js` — server bootstrap: MongoDB connect, `initMediasoup()`, Socket.IO attach
-- `backend/src/mediasoupServer.js` — creates mediasoup workers
-- `backend/src/mediasoupHandlers.js` — router/transport/produce/consume signaling
-- `backend/src/controllers/socketManager.js` — initializes socket handlers (chat, mediasoup, screen share)
-- `backend/src/routes/*.js` — REST endpoints: auth, recordings, system, users
-- `frontend/src/pages/VideoMeetMediasoup.jsx` — example mediasoup client that produces local tracks and consumes remote producers
+## Vercel deployment
 
----
+The root `vercel.json` installs both packages, builds the frontend into `frontend/build`, and routes the API to `api/index.js`. Static assets remain on the CDN.
 
-## API Endpoints (summary)
+1. Link or create the Vercel project from this root directory.
+2. Provision a dedicated free Neon database in Vercel Marketplace and connect the project environments. The existing deployment uses `zoom-clone-postgres` in Singapore.
+3. Keep Fluid compute enabled. The function duration is 300 seconds, with client reconnection on disconnect.
+4. Run `npx vercel --prod`.
+5. Verify `/api/health` and run the live smoke command below.
 
-- `POST /api/v1/auth/register` — create account
-- `POST /api/v1/auth/login` — authenticate (returns access + refresh tokens)
-- `POST /api/v1/auth/refresh` — refresh access token
-- `POST /api/v1/auth/logout` — revoke token
-- `GET /api/v1/recordings` — list available recordings (from `recordings/` folder)
-- `GET /api/v1/recordings/download/:file` — download
-- `GET /api/v1/system/info` — server status + TURN URL
+Source is maintained at [harshgavandit/Zoom_Clone](https://github.com/harshgavandit/Zoom_Clone). The Vercel deployment was published with the CLI. GitHub Actions verifies each push and pull request using a temporary Postgres service; no production database credentials are required by CI.
 
----
+## Verification
 
-## Mediasoup & TURN Notes
-
-- Mediasoup requires CPU and networking considerations when deployed (workers, ports 20000-40000/udp). See `backend/src/mediasoupServer.js` for worker creation and `docker-compose.yml` for the port range mapping.
-- A TURN server (Coturn) is included in `docker-compose.yml` and exposed on `3478`.
-
----
-
-## Known Gaps & Next Steps
-
-1. `.env.example` file is referenced by older docs but missing — add a template in the repo.
-2. Some mediasoup helpers are prototypes and marked `TODO` (see `mediasoupServer.js`). Consider hardening production behavior (worker lifecycle, error handling).
-3. Add automated tests and CI workflows.
-4. Add docs for recording pipeline (FFmpeg usage) and retention policy.
-
----
-
-If you'd like, I can:
-
-1. Create a `backend/.env.example` file and commit it.
-2. Draft a shorter quick-start README landing section for contributors.
-3. Add a checklist for production hardening and deployment.
-
-<<<<<<< HEAD
-Tell me which of these you'd like me to do next.
-=======
-
-
-## 🚀 Production Deployment
-
-Before deploying to production:
-
-1. Set strong JWT secret in .env
-2. Configure MongoDB connection to managed service
-3. Set Redis connection to managed service
-4. Enable HTTPS/TLS on your domain
-5. Configure TURN server credentials
-6. Set up SSL certificates
-7. Enable rate limiting on API endpoints
-8. Configure backups for recordings and database
-
-For full production checklist, see Docker Hub deployment documentation.
-
----
-
-## 📞 Support
-
-**For issues:**
-1. Check troubleshooting section above
-2. Verify all prerequisites are installed
-3. Check .env configuration
-4. Review browser console for errors
-5. Check backend logs: `docker-compose logs backend`
-
-**For Docker logs:**
-```bash
-# View all logs
-docker-compose logs -f
-
-# View specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f redis
+```powershell
+npm test
+npm --prefix frontend test
+npm run build
+npm audit
+npm audit --prefix frontend
+$env:BASE_URL='https://zoom-clone-blue-pi.vercel.app'
+npm run test:live
 ```
 
----
+`npm test` starts two independent local backend processes against the dedicated database and runs 24 real HTTP and meeting-event checks. These cover registration, invalid credentials, token rotation/replay, logout revocation, authenticated history, distributed presence/signaling, chat identity, room isolation, participant departure, reactions, raised hands, whiteboard events, and ICE configuration. Test accounts use generated synthetic credentials.
 
-## 📄 License
+On GitHub Actions the same integration suite uses the workflow's disposable Postgres service instead of the hosted database. Build output, `.env.local`, local evidence, and agent tooling are excluded from Git.
 
-ISC License - See LICENSE file for details
+Browser verification uses the built-in browser. Generated video and silent audio may be used for reproducible media checks; those checks do not establish physical camera/microphone quality or actual OS screen-capture behavior.
 
----
+## Practical limits
 
-## ✨ Credits
+- **Network traversal:** the default uses a public STUN server. Vercel does not provide a TURN relay. Calls on restrictive NAT/firewall networks can require an authenticated TURN service; configure the optional `TURN_URL`, `TURN_USERNAME`, and `TURN_CREDENTIAL` variables if one becomes available. A Vercel-only deployment cannot guarantee media connectivity on every network.
+- **Recordings:** recording requires browser support and screen-selection permission. Videos download locally; there is no cloud recording archive. The recordings page clearly describes that behavior.
+- **Scale:** this is a small-group peer-to-peer app. Every participant sends media to the others. It is not an SFU-scale replacement for Zoom.
+- **Access:** room codes are invitations, not host-approved waiting rooms. Prototype admin/analytics/virtual-background components from the archive are not exposed as verified product features.
+- **Retention:** the chat API only replays the last 100 messages from the preceding 24 hours. Database retention/backup policies should be configured for a larger production rollout.
 
-Built as a professional hackathon project demonstrating:
-- Advanced WebRTC architecture (SFU)
-- Production-grade security practices
-- Enterprise-level features (analytics, accessibility)
-- Professional UI/UX design
-- Scalable infrastructure patterns
+## Source map
 
-**Ready for deployment. Built to win.** 🏆
->>>>>>> b5e23a55c14e98a88ed2ebfdfdfc959ca78ecc6f
+- `server/app.js`: active API, database schema, sessions, validation, Socket.IO, and distributed adapter.
+- `api/index.js`: Vercel function export.
+- `frontend/src/useMeeting.js`: meeting media, signaling, reconnection, recording, and whiteboard lifecycle.
+- `frontend/src/pages/VideoMeet.jsx`: meeting UI.
+- `frontend/src/utils/api.js`: same-origin API client and session refresh.
+- `scripts/smoke.mjs`, `tests/integration.test.js`: real integration verification.
+- `backend/`: original native Mediasoup prototype, not the deployed runtime.

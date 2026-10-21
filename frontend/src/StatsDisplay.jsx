@@ -9,7 +9,7 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 export default function StatsDisplay({ stats, isOpen, onClose }) {
   const [displayStats, setDisplayStats] = useState({

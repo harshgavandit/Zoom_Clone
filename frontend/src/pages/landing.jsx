@@ -16,7 +16,7 @@ export default function LandingPage() {
                     <h2>Apna Video Call</h2>
                 </div>
                 <div className='navlist'>
-                    <p className="navlist-item" onClick={() => router("/guest-meeting")}>Join as Guest</p>
+                    <p className="navlist-item" onClick={() => router(`/${crypto.randomUUID()}`)}>Join as Guest</p>
                     <p className="navlist-item" onClick={() => router("/auth")}>Register</p>
                     <p className="navlist-item" onClick={() => router("/recordings")}>Recordings</p>
                     <button className="navlist-btn" onClick={() => router("/auth")}>Login</button>
@@ -29,7 +29,7 @@ export default function LandingPage() {
                     <p>Bridge the distance instantly with high-fidelity video calling, interactive screen sharing, and real-time collaborative whiteboards.</p>
                     <div className="landingBtnGroup">
                         <Link to="/auth" className="primary-btn">Get Started</Link>
-                        <button onClick={() => router("/auth")} className="secondary-btn">Join Meeting</button>
+                        <button onClick={() => router(`/${crypto.randomUUID()}`)} className="secondary-btn">Start Guest Meeting</button>
                     </div>
                 </div>
                 

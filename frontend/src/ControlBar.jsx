@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { IconButton, Tooltip, Box } from '@mui/material';
-import MicIcon from '@mui/icons-material/Mic';
-import MicOffIcon from '@mui/icons-material/MicOff';
-import VideocamIcon from '@mui/icons-material/Videocam';
-import VideocamOffIcon from '@mui/icons-material/VideocamOff';
-import CallEndIcon from '@mui/icons-material/CallEnd';
-import ScreenShareIcon from '@mui/icons-material/ScreenShare';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import { Mic as MicIcon } from '@mui/icons-material';
+import { MicOff as MicOffIcon } from '@mui/icons-material';
+import { Videocam as VideocamIcon } from '@mui/icons-material';
+import { VideocamOff as VideocamOffIcon } from '@mui/icons-material';
+import { CallEnd as CallEndIcon } from '@mui/icons-material';
+import { ScreenShare as ScreenShareIcon } from '@mui/icons-material';
+import { FiberManualRecord as FiberManualRecordIcon } from '@mui/icons-material';
+import { VolumeUp as VolumeUpIcon } from '@mui/icons-material';
 
 export default function ControlBar({ 
   onEndCall, 

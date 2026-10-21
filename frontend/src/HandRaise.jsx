@@ -15,8 +15,8 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import PanToolIcon from '@mui/icons-material/PanTool';
-import CloseIcon from '@mui/icons-material/Close';
+import { PanTool as PanToolIcon } from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 export default function HandRaiseManager({ socket, roomId, userId, username, isHost }) {
   const [raisedHands, setRaisedHands] = useState(new Map()); // userId -> { username, timestamp }

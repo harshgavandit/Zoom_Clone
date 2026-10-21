@@ -1,7 +1,7 @@
 // ErrorBoundary.jsx - Catch React errors gracefully
 import React from 'react';
 import { Box, Button, Typography, Container } from '@mui/material';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { ErrorOutline as ErrorOutlineIcon } from '@mui/icons-material';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -56,7 +56,7 @@ export class ErrorBoundary extends React.Component {
               >
                 We encountered an unexpected error. Please try reloading the page.
               </Typography>
-              {process.env.NODE_ENV === 'development' && (
+              {import.meta.env.DEV && (
                 <Box
                   sx={{
                     mt: 2,

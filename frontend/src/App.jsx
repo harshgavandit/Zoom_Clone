@@ -1,17 +1,18 @@
+import { lazy, Suspense } from 'react';
 import './App.css';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import LandingPage from './pages/landing';
-import Authentication from './pages/authentication';
+const Authentication = lazy(() => import('./pages/authentication'));
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import ErrorBoundary from './ErrorBoundary';
-import VideoMeetComponent from './pages/VideoMeet';
-import VideoMeetMediasoup from './pages/VideoMeetMediasoup';
-import HomeComponent from './pages/home';
-import History from './pages/history';
-import RecordingsPage from './pages/recordings';
-import SystemInfo from './pages/systemInfo';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+const VideoMeetComponent = lazy(() => import('./pages/VideoMeet'));
+
+const HomeComponent = lazy(() => import('./pages/home'));
+const History = lazy(() => import('./pages/history'));
+const RecordingsPage = lazy(() => import('./pages/recordings'));
+const SystemInfo = lazy(() => import('./pages/systemInfo'));
+import { ThemeProvider, createTheme } from '@mui/material';
 
 const darkTheme = createTheme({
   palette: {
@@ -63,16 +64,18 @@ function App() {
           <ToastProvider>
             <Router>
               <AuthProvider>
+                <Suspense fallback={<div role="status" style={{ padding: 32 }}>Loading…</div>}>
                 <Routes>
                   <Route path='/' element={<LandingPage />} />
                   <Route path='/auth' element={<Authentication />} />
                   <Route path='/home' element={<HomeComponent />} />
                   <Route path='/history' element={<History />} />
                   <Route path='/:url' element={<VideoMeetComponent />} />
-                  <Route path='/ms/:roomId' element={<VideoMeetMediasoup />} />
+                  <Route path='/ms/:roomId' element={<VideoMeetComponent />} />
                   <Route path='/recordings' element={<RecordingsPage />} />
                   <Route path='/system-info' element={<SystemInfo />} />
                 </Routes>
+                </Suspense>
               </AuthProvider>
             </Router>
           </ToastProvider>

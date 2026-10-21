@@ -35,7 +35,7 @@ export default class MediasoupClient {
           this.device = new Device();
 
           // If server provides TURN URL, pass it to device or RTCPeerConnections later
-          this.turnUrl = (window.__env && window.__env.REACT_APP_TURN_URL) || process.env.REACT_APP_TURN_URL || null;
+          this.turnUrl = (window.__env && window.__env.REACT_APP_TURN_URL) || import.meta.env.VITE_TURN_URL || null;
 
           await this.device.load({ routerRtpCapabilities: res.rtpCapabilities });
           resolve(this.device);

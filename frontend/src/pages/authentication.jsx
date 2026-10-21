@@ -1,17 +1,18 @@
 import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import Paper from '@mui/material/Paper';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { errorMessage } from '../utils/api';
+import { Avatar as Avatar } from '@mui/material';
+import { Button as Button } from '@mui/material';
+import { CssBaseline as CssBaseline } from '@mui/material';
+import { TextField as TextField } from '@mui/material';
+
+
+
+import { Paper as Paper } from '@mui/material';
+import { Box as Box } from '@mui/material';
+import { Grid as Grid } from '@mui/material';
+import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
+
+import { createTheme, ThemeProvider } from '@mui/material';
 import { AuthContext } from '../contexts/AuthContext';
 import { Snackbar } from '@mui/material';
 
@@ -66,33 +67,36 @@ const defaultTheme = createTheme({
 
 export default function Authentication() {
 
-    
 
-    const [username, setUsername] = React.useState();
-    const [password, setPassword] = React.useState();
-    const [name, setName] = React.useState();
-    const [error, setError] = React.useState();
-    const [message, setMessage] = React.useState();
+
+    const [username, setUsername] = React.useState('');
+    const [password, setPassword] = React.useState('');
+    const [name, setName] = React.useState('');
+    const [error, setError] = React.useState('');
+    const [message, setMessage] = React.useState('');
 
 
     const [formState, setFormState] = React.useState(0);
 
-    const [open, setOpen] = React.useState(false)
+    const [open, setOpen] = React.useState(false);
+    const [busy, setBusy] = React.useState(false);
 
 
     const { handleRegister, handleLogin } = React.useContext(AuthContext);
 
     let handleAuth = async () => {
+        if (busy) return;
+        setBusy(true); setError('');
         try {
             if (formState === 0) {
 
-                let result = await handleLogin(username, password)
+                await handleLogin(username, password)
 
 
             }
             if (formState === 1) {
                 let result = await handleRegister(name, username, password);
-                console.log(result);
+
                 setUsername("");
                 setMessage(result);
                 setOpen(true);
@@ -102,10 +106,10 @@ export default function Authentication() {
             }
         } catch (err) {
 
-            console.log(err);
-            let message = (err.response.data.message);
+
+            let message = errorMessage(err);
             setError(message);
-        }
+        } finally { setBusy(false); }
     }
 
 
@@ -140,42 +144,43 @@ export default function Authentication() {
 
 
                         <Box sx={{ display: 'flex', gap: 1, background: 'rgba(255, 255, 255, 0.05)', p: 0.5, borderRadius: '12px', mb: 3, width: '100%' }}>
-                            <Button 
-                                variant={formState === 0 ? "contained" : "text"} 
-                                sx={{ 
-                                    flex: 1, 
+                            <Button
+                                variant={formState === 0 ? "contained" : "text"}
+                                sx={{
+                                    flex: 1,
                                     boxShadow: formState === 0 ? '0 4px 12px rgba(0,106,255,0.3)' : 'none',
                                     bgcolor: formState === 0 ? 'primary.main' : 'transparent',
                                     color: formState === 0 ? 'white' : 'text.secondary',
                                     '&:hover': { bgcolor: formState === 0 ? 'primary.dark' : 'rgba(255,255,255,0.05)' }
-                                }} 
+                                }}
                                 onClick={() => { setFormState(0) }}
                             >
                                 Sign In
                             </Button>
-                            <Button 
-                                variant={formState === 1 ? "contained" : "text"} 
-                                sx={{ 
+                            <Button
+                                variant={formState === 1 ? "contained" : "text"}
+                                sx={{
                                     flex: 1,
                                     boxShadow: formState === 1 ? '0 4px 12px rgba(0,106,255,0.3)' : 'none',
                                     bgcolor: formState === 1 ? 'primary.main' : 'transparent',
                                     color: formState === 1 ? 'white' : 'text.secondary',
                                     '&:hover': { bgcolor: formState === 1 ? 'primary.dark' : 'rgba(255,255,255,0.05)' }
-                                }} 
+                                }}
                                 onClick={() => { setFormState(1) }}
                             >
                                 Sign Up
                             </Button>
                         </Box>
 
-                        <Box component="form" noValidate sx={{ mt: 1 }}>
+                        <Box component="form" onSubmit={e => { e.preventDefault(); handleAuth(); }} sx={{ mt: 1 }}>
                             {formState === 1 ? <TextField
                                 margin="normal"
                                 required
                                 fullWidth
-                                id="username"
+                                id="full-name"
                                 label="Full Name"
-                                name="username"
+                                name="name"
+                                autoComplete="name"
                                 value={name}
                                 autoFocus
                                 onChange={(e) => setName(e.target.value)}
@@ -206,14 +211,16 @@ export default function Authentication() {
                                 id="password"
                             />
 
-                            <p style={{ color: "red" }}>{error}</p>
+                            <p role="alert" style={{ color: "#fca5a5" }}>{error}</p>
+                            {formState === 1 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Use 8–72 characters with uppercase, lowercase, and a number.</p>}
 
                             <Button
-                                type="button"
+                                type="submit"
+                                disabled={busy}
                                 fullWidth
                                 variant="contained"
                                 sx={{ mt: 3, mb: 2 }}
-                                onClick={handleAuth}
+
                             >
                                 {formState === 0 ? "Login " : "Register"}
                             </Button>
@@ -227,6 +234,7 @@ export default function Authentication() {
 
                 open={open}
                 autoHideDuration={4000}
+                onClose={() => setOpen(false)}
                 message={message}
             />
 

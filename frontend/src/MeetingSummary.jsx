@@ -19,8 +19,8 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import DownloadIcon from '@mui/icons-material/Download';
-import ShareIcon from '@mui/icons-material/Share';
+import { Download as DownloadIcon } from '@mui/icons-material';
+import { Share as ShareIcon } from '@mui/icons-material';
 
 export default function MeetingSummary({ open, summary, onClose, onDownload }) {
   if (!open || !summary) return null;

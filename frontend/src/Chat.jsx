@@ -10,9 +10,9 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
-import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
-import CloseIcon from '@mui/icons-material/Close';
+import { Send as SendIcon } from '@mui/icons-material';
+import { EmojiEmotions as EmojiEmotionsIcon } from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 const REACTIONS = ['👍', '❤️', '😂', '🎉', '🔥'];
 

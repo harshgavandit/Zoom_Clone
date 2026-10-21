@@ -1,6 +1,6 @@
 // Logger.js - Centralized logging system
 export class Logger {
-  constructor(name = 'App', isDev = process.env.NODE_ENV === 'development') {
+  constructor(name = 'App', isDev = import.meta.env.DEV) {
     this.name = name;
     this.isDev = isDev;
     this.logs = [];

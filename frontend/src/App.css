@@ -386,3 +386,21 @@
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-color);
 }
+
+@media (max-width: 900px) {
+  .landingPageContainer { height: auto; min-height: 100dvh; overflow: auto; }
+  .landingPageContainer nav { height: auto; min-height: 80px; padding: 16px 20px; gap: 16px; flex-wrap: wrap; }
+  .landingPageContainer nav .navlist { gap: 14px; flex-wrap: wrap; }
+  .landingPageContainer nav h2 { font-size: 1.4rem; }
+  .landingMainContainer { grid-template-columns: 1fr; height: auto; padding: 48px 24px; gap: 40px; }
+  .landingLeft h1 { font-size: clamp(2.2rem, 8vw, 3.4rem); }
+  .landingBtnGroup { flex-wrap: wrap; }
+  .landingRight { min-width: 0; }
+  .mockupContainer { max-width: 100%; }
+  .navBar { padding: 16px 20px; flex-wrap: wrap; gap: 16px; }
+  .navBarRight { gap: 16px; flex-wrap: wrap; }
+  .meetContainer { grid-template-columns: 1fr; padding: 32px 20px; gap: 32px; }
+  .leftPanel h2 { font-size: 2rem; }
+  .leftPanel .join-card { padding: 20px; }
+  .join-card > div { flex-wrap: wrap; }
+}
