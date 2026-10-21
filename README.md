@@ -59,7 +59,7 @@ The root `vercel.json` installs both packages, builds the frontend into `fronten
 4. Run `npx vercel --prod`.
 5. Verify `/api/health` and run the live smoke command below.
 
-Source is maintained at [harshgavandit/Zoom_Clone](https://github.com/harshgavandit/Zoom_Clone). The Vercel deployment was published with the CLI. GitHub Actions verifies each push and pull request using a temporary Postgres service; no production database credentials are required by CI.
+Source is maintained at [harshgavandit/Zoom_Clone](https://github.com/harshgavandit/Zoom_Clone). The repository is connected to the Vercel `zoom-clone` project: pushes to `main` automatically create production deployments and update the production domain after a successful build. Other branches and pull requests use preview deployments. The CLI remains available for manual deployments. GitHub Actions verifies each push and pull request using a temporary Postgres service; no production database credentials are required by CI.
 
 ## Verification
 
