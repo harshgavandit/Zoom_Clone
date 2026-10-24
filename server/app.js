@@ -1,5 +1,6 @@
 import express from 'express';
 import { createServer } from 'node:http';
+import { isIP } from 'node:net';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -55,7 +56,13 @@ const token = () => randomBytes(32).toString('base64url');
 const roomPattern = /^[a-zA-Z0-9_-]{3,80}$/;
 const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 const publicUser = row => ({ id: row.id, username: row.username, name: row.name, role: 'user' });
-const clientIp = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+const clientIp = req => {
+  // Direct/self-hosted clients cannot choose their authentication-rate bucket.
+  // Vercel overwrites this platform header; generic forwarding headers are untrusted.
+  const forwarded = process.env.VERCEL === '1' ? req.headers['x-vercel-forwarded-for'] : undefined;
+  const candidate = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : '';
+  return isIP(candidate) ? candidate : req.socket.remoteAddress || 'unknown';
+};
 app.disable('x-powered-by');
 app.use(express.json({ limit: '40kb' }));
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
@@ -152,12 +159,17 @@ io.on('connection',socket=>{
   socket.on('error',()=>{});
   socket.on('join-call',safe(async(room,username,initialState={},ack=()=>{})=>{
     if(socket.data.room) return ack({ok:true});
+    if(socket.data.joining) return ack({error:'A meeting join is already in progress.'});
     if(typeof room!=='string'||!roomPattern.test(room)||typeof username!=='string'||!username.trim()||username.length>80) return ack({error:'Enter a valid meeting code and display name.'});
     const suppliedId=socket.handshake.auth?.clientId;
     const clientId=typeof suppliedId==='string'&&/^[\w-]{32,80}$/.test(suppliedId)?suppliedId:token();
     const state={handRaised:false,isMuted:Boolean(initialState?.isMuted),isVideoOff:Boolean(initialState?.isVideoOff)};
-    const transaction=await pool.connect();
+    // Reserve admission synchronously: per-room database locks cannot serialize
+    // two simultaneous requests on this socket targeting different rooms.
+    socket.data.joining=true;
+    let transaction,committed=false;
     try {
+      transaction=await pool.connect();
       await transaction.query('BEGIN');
       await transaction.query('SELECT pg_advisory_xact_lock(hashtext($1))',[room]);
       // A reconnect replaces this tab's previous lease, including after an
@@ -166,10 +178,20 @@ io.on('connection',socket=>{
       const count=await transaction.query('SELECT count(*)::int AS count FROM zoom_presence WHERE room=$1',[room]);
       if(count.rows[0].count>=6){await transaction.query('ROLLBACK');return ack({error:'This meeting is full (6 participants).'});}
       await transaction.query(`INSERT INTO zoom_presence(socket_id,client_id,room,username,state,expires_at) VALUES($1,$2,$3,$4,$5,now()+interval '90 seconds')`,[socket.id,clientId,room,username.trim(),state]);
-      socket.data.room=room;socket.data.username=username.trim();socket.data.state=state;
-      await socket.join(room);
       await transaction.query('COMMIT');
-    }catch(error){await transaction.query('ROLLBACK');throw error;}finally{transaction.release();}
+      committed=true;
+      await socket.join(room);
+      if(!socket.connected) throw new Error('Participant disconnected during admission');
+      socket.data.room=room;socket.data.username=username.trim();socket.data.state=state;
+    }catch(error){
+      if(transaction&&!committed) await transaction.query('ROLLBACK').catch(()=>{});
+      // An adapter failure may happen after joining; remove that subscription
+      // and any committed lease before allowing another admission attempt.
+      await Promise.resolve().then(()=>socket.leave(room)).catch(()=>{});
+      if(committed) await pool.query('DELETE FROM zoom_presence WHERE socket_id=$1',[socket.id]).catch(()=>{});
+      delete socket.data.room;delete socket.data.username;delete socket.data.state;
+      throw error;
+    }finally{transaction?.release();socket.data.joining=false;}
     const clients=await members(room);
     io.to(room).emit('user-joined',socket.id,clients);
     const {rows}=await pool.query(`SELECT sender,message,socket_id FROM zoom_messages WHERE room=$1 AND created_at>now()-interval '24 hours' ORDER BY id DESC LIMIT 100`,[room]);
