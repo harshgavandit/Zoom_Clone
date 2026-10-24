@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:7
@@ -24,7 +22,7 @@ services:
     build:
       context: ./backend
     environment:
-      - MONGO_URL=${MONGO_URL}
+      - MONGO_URL=${MONGO_URL:?Set MONGO_URL to your MongoDB connection string}
       - REDIS_URL=redis://redis:6379
       - TURN_URL=turn:coturn:3478
       - PORT=8000
@@ -36,4 +34,5 @@ services:
       - coturn
     volumes:
       - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
     command: ["node", "src/app.js"]

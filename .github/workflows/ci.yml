@@ -37,6 +37,7 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             frontend/package-lock.json
+            backend/package-lock.json
       - run: npm ci
       - run: npm ci --prefix frontend
       - name: Check server syntax
@@ -51,3 +52,10 @@ jobs:
         run: npm audit --audit-level=moderate
       - name: Audit frontend and build dependencies
         run: npm audit --prefix frontend --audit-level=moderate
+      - name: Install historical backend for offline compatibility tests
+        # Tests use bundled bcrypt prebuilds; no SFU worker build or MongoDB is needed.
+        run: npm ci --prefix backend --ignore-scripts
+      - name: Test historical backend dependency compatibility
+        run: npm --prefix backend test
+      - name: Audit historical backend dependencies
+        run: npm audit --prefix backend --audit-level=moderate

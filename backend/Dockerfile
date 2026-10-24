@@ -1,10 +1,12 @@
 # Backend Dockerfile (mediasoup prototype)
-FROM node:18-bullseye-slim
+FROM node:22-bookworm
 
 WORKDIR /usr/src/app
 
-# Install build deps for mediasoup native modules
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Use the official image's CA bundle for HTTPS package transport.
+RUN sed -i 's|http://deb.debian.org/debian$|https://ftp.debian.org/debian|;s|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::https::Timeout=15 -o Acquire::Retries=2 update \
+    && apt-get -o Acquire::https::Timeout=15 -o Acquire::https::Pipeline-Depth=0 -o Acquire::Retries=2 install -y --no-install-recommends \
     build-essential \
     python3 \
     git \
@@ -12,10 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/package*.json ./
-RUN npm ci --no-audit --no-fund --production
+COPY package*.json ./
+RUN npm ci --no-audit --no-fund --omit=dev
 
-COPY backend/ .
+COPY . .
 
 ENV NODE_ENV=production
 EXPOSE 8000

@@ -89,6 +89,8 @@ npm run build
 
 [CI](.github/workflows/ci.yml) supplies isolated PostgreSQL, runs frontend route tests and the two-instance integration suite, builds the UI and audits active dependencies. [`scripts/smoke.mjs`](scripts/smoke.mjs) contains the shared checks. `npm run test:live` defaults to `http://localhost:8000`; set `BASE_URL` and optionally `SECONDARY_URL` to test another deployment. It creates test accounts and meeting records, so use a dedicated environment and run it deliberately.
 
+CI also checks the historical `backend/` dependencies separately with `npm ci --prefix backend --ignore-scripts`, `npm --prefix backend test`, and `npm audit --prefix backend --audit-level=moderate`. These offline checks exercise native bcrypt compatibility, Mongoose validation, existing authentication controllers and compressed-body parsing without connecting MongoDB or starting mediasoup workers. They do not replace a full SFU deployment test.
+
 ## Deployment and limits
 
 [`vercel.json`](vercel.json) builds the Vite frontend and routes API/signaling traffic through [`api/index.js`](api/index.js). Configure the database URLs in the hosting environment. No database credential is sent to the browser.
