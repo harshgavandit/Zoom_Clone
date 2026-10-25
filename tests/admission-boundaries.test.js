@@ -35,14 +35,14 @@ test('Vercel accepts only its platform header containing a valid IP', () => {
 // Run the actual connection callback with deterministic transaction scheduling.
 // The second transaction is delayed until the first commits, modeling two valid
 // joins that raced past an earlier pre-await room check. No SQL or network runs.
-function meetingHarness({ commitFails = false, joinFails = false } = {}) {
+function meetingHarness({ commitFails = false, joinFails = false, replaced = [], revokeFails = false } = {}) {
   const start = source.indexOf("io.on('connection'");
   const end = source.indexOf('const staticDir=', start);
   let failNextJoin = joinFails;
   let connectHandler, connects = 0, releases = 0, rollbacks = 0, cleanupDeletes = 0;
   let resolveCommit;
   const firstCommitted = new Promise(resolve => { resolveCommit = resolve; });
-  const memberships = new Set(), handlers = new Map(), errors = [];
+  const memberships = new Set(), handlers = new Map(), errors = [], transitions = [];
   const pool = {
     async connect() {
       const id = ++connects;
@@ -51,17 +51,25 @@ function meetingHarness({ commitFails = false, joinFails = false } = {}) {
         if (sql === 'ROLLBACK') rollbacks++;
         if (sql === 'COMMIT') {
           if (commitFails) throw new Error('Synthetic commit failure');
+          transitions.push('commit');
           resolveCommit();
         }
-        return { rows: sql.startsWith('SELECT count') ? [{ count: 0 }] : [] };
+        return { rows: sql.startsWith('SELECT count') ? [{ count: 0 }]
+          : sql.startsWith('DELETE FROM zoom_presence') ? replaced : [] };
       } };
     },
     async query(sql) { if (sql.startsWith('DELETE FROM zoom_presence')) cleanupDeletes++; return { rows: [] }; }
   };
-  const io = { on(event, handler) { connectHandler = handler; }, to() { return { emit() {} }; } };
+  const io = { on(event, handler) { connectHandler = handler; }, to() { return { emit() {} }; },
+    in(id) { return { disconnectSockets(close) {
+      assert.equal(close, true);
+      transitions.push(`revoke:${id}`);
+      if (revokeFails) throw new Error('Synthetic adapter revoke failure');
+    } }; }
+  };
   const socket = { id: 'one-socket', connected: true, data: {}, handshake: { auth: { clientId: 'x'.repeat(40) } },
     on(event, handler) { handlers.set(event, handler); }, use() {},
-    async join(room) { memberships.add(room); if (failNextJoin) { failNextJoin = false; throw new Error('Synthetic adapter join failure'); } },
+    async join(room) { transitions.push(`join:${room}`); memberships.add(room); if (failNextJoin) { failNextJoin = false; throw new Error('Synthetic adapter join failure'); } },
     async leave(room) { memberships.delete(room); },
     to() { return { emit() {} }; }, emit(event, value) { if (event === 'meeting-error') errors.push(value); }
   };
@@ -69,7 +77,7 @@ function meetingHarness({ commitFails = false, joinFails = false } = {}) {
     token: () => 'x'.repeat(43), roomPattern: /^[a-zA-Z0-9_-]{3,80}$/, Date, Number, Boolean, JSON, Promise,
     setInterval: () => ({ unref() {} }), clearInterval() {} });
   connectHandler(socket);
-  return { socket, memberships, errors, join: handlers.get('join-call'),
+  return { socket, memberships, errors, transitions, join: handlers.get('join-call'),
     counters: () => ({ connects, releases, rollbacks, cleanupDeletes }) };
 }
 
@@ -112,4 +120,32 @@ test('adapter failure after commit removes committed presence and permits a clea
   assert.equal(retry.ok, true);
   assert.deepEqual([...fixture.memberships], ['room-beta']);
   assert.equal(fixture.socket.data.room, 'room-beta');
+});
+
+test('reconnect revokes only the replaced client subscription after commit and before joining', async () => {
+  const fixture = meetingHarness({ replaced: [
+    { socket_id: 'older-socket', client_id: 'x'.repeat(40) },
+    { socket_id: 'unrelated-expired-socket', client_id: 'different-client' },
+  ] });
+  let result;
+  await fixture.join('room-alpha', 'Returning participant', {}, reply => { result = reply; });
+  assert.equal(result.ok, true);
+  assert.deepEqual(fixture.transitions, ['commit', 'revoke:older-socket', 'join:room-alpha']);
+});
+
+test('failed transaction does not disconnect the previous participant', async () => {
+  const fixture = meetingHarness({ commitFails: true,
+    replaced: [{ socket_id: 'older-socket', client_id: 'x'.repeat(40) }] });
+  await fixture.join('room-alpha', 'Returning participant', {}, () => assert.fail('Failed admission cannot succeed'));
+  assert.deepEqual(fixture.transitions, []);
+});
+
+test('adapter revocation failure cannot admit another subscriber', async () => {
+  const fixture = meetingHarness({ revokeFails: true,
+    replaced: [{ socket_id: 'older-socket', client_id: 'x'.repeat(40) }] });
+  await fixture.join('room-alpha', 'Returning participant', {}, () => assert.fail('Failed revocation cannot succeed'));
+  assert.equal(fixture.memberships.size, 0);
+  assert.equal(fixture.socket.data.room, undefined);
+  assert.equal(fixture.counters().cleanupDeletes, 1);
+  assert.deepEqual(fixture.transitions, ['commit', 'revoke:older-socket']);
 });

@@ -2,7 +2,7 @@
 
 A full-stack video meeting app with peer-to-peer WebRTC media, shared PostgreSQL-backed signaling and room state, and guest or authenticated entry.
 
-[Open the app](https://zoom-clone-blue-pi.vercel.app/) · [Meeting server](server/app.js) · [Media lifecycle](frontend/src/useMeeting.js) · [Integration tests](tests/integration.test.js)
+[Open the app](https://zoom-clone-blue-pi.vercel.app/) · [Meeting server](server/app.js) · [Media lifecycle](frontend/src/useMeeting.js) · [Integration tests](tests/integration.test.js) · [Security](SECURITY.md)
 
 ## Features
 
@@ -35,7 +35,7 @@ Media travels between peers, rather than through an application media server. Th
 |---|---|
 | Transactional room admission | A PostgreSQL advisory lock serializes joins to the same room before enforcing the six-participant cap. |
 | One room per socket | Admission is reserved before the first asynchronous operation. Overlapping join requests cannot subscribe one socket to multiple rooms; failed database commits or adapter joins clear room privileges and subscriptions. |
-| Expiring participant leases | Reconnect replaces the tab's previous lease; heartbeats refresh presence and stale leases expire after an interrupted process. |
+| Expiring participant leases | Reconnect replaces the tab's previous lease and requests disconnection of its old socket through the distributed adapter before subscribing the replacement. Heartbeats refresh presence; stale leases expire after an interrupted process. |
 | Room-scoped signaling | The server checks that signal recipients belong to the sender's room and bounds message sizes and event rates. |
 | Hashed, rotating sessions | Access and refresh tokens are stored as hashes. Refresh replaces both tokens; logout revokes the stored session. |
 | Authentication-rate identity | Direct deployments use the connection's peer address, ignoring client-supplied forwarding headers. Vercel deployments accept only a valid IP from the platform's `x-vercel-forwarded-for` header. |
@@ -89,7 +89,7 @@ npm run build
 
 `npm test` launches two local server instances against the configured PostgreSQL database and exercises authentication, refresh replay, logout revocation, room events and cross-room isolation. It creates synthetic accounts and meeting records; use a separate test database. Test ports `8121` and `8122` must be free.
 
-The same command runs [admission-boundary regressions](tests/admission-boundaries.test.js) against the production connection handler with deterministic database/adapter failures, and [compressed-body checks](tests/compressed-body.test.js) against the installed HTTP middleware. These checks cover concurrent joins, failed-admission cleanup and spoofed forwarding headers. The two-instance suite verifies signaling and shared state; it does not measure real camera/audio quality or performance across different networks.
+The same command runs [admission-boundary regressions](tests/admission-boundaries.test.js) against the production connection handler with deterministic database/adapter failures, and [compressed-body checks](tests/compressed-body.test.js) against the installed HTTP middleware. These checks cover concurrent joins, failed-admission cleanup, reconnect revocation order and spoofed forwarding headers. The two-instance suite verifies signaling, shared state, the six-participant admission cap and old-socket disconnection during reconnect; it does not measure real camera/audio quality or performance across different networks.
 
 [CI](.github/workflows/ci.yml) supplies isolated PostgreSQL, runs frontend route tests and the two-instance integration suite, builds the UI and audits active dependencies. [`scripts/smoke.mjs`](scripts/smoke.mjs) contains the shared checks. `npm run test:live` defaults to `http://localhost:8000`; set `BASE_URL` and optionally `SECONDARY_URL` to test another deployment. It creates test accounts and meeting records, so use a dedicated environment and run it deliberately.
 

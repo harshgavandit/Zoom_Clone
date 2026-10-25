@@ -14,8 +14,9 @@ export async function smoke(base = process.env.BASE_URL || 'http://localhost:800
     const timer = setTimeout(() => { socket.off(event, handler); reject(new Error(`Timed out waiting for ${event}`)); }, timeout);
     const handler = (...args) => { clearTimeout(timer); resolve(args); }; socket.once(event, handler);
   });
-  const connect = async (url) => {
-    const socket = io(url, { path: '/api/index', addTrailingSlash: false, transports: ['websocket'], reconnection: false, timeout: 20000 });
+  const connect = async (url, clientId) => {
+    const socket = io(url, { path: '/api/index', addTrailingSlash: false, transports: ['websocket'], reconnection: false, timeout: 20000,
+      ...(clientId ? { auth: { clientId } } : {}) });
     await new Promise((resolve,reject) => { socket.once('connect',resolve); socket.once('connect_error',error => { socket.disconnect(); reject(error); }); }); return socket;
   };
   const ack = (socket, ...args) => new Promise((resolve, reject) => socket.timeout(20000).emit(...args, (error, result) => error ? reject(error) : resolve(result)));
@@ -62,6 +63,25 @@ export async function smoke(base = process.env.BASE_URL || 'http://localhost:800
     assert((await ack(d, 'join-call', room, 'Returning participant', {})).ok); assert((await history)[0].some(m => m.data === 'Synthetic end-to-end message')); pass('chat recovery for late joins');
     const left = expect(a, 'user-left'); b.disconnect(); assert((await left)[0]); pass('participant departure cleanup');
     assert.equal(leaked, false); pass('cross-room chat and signaling isolation');
+    const clientId = randomBytes(32).toString('base64url');
+    const previous = await connect(base, clientId); sockets.push(previous);
+    assert((await ack(previous, 'join-call', `${room}-reconnect`, 'First connection', {})).ok);
+    const replaced = expect(previous, 'disconnect');
+    const replacement = await connect(secondary, clientId); sockets.push(replacement);
+    assert((await ack(replacement, 'join-call', `${room}-reconnect`, 'Replacement connection', {})).ok);
+    assert.equal((await replaced)[0], 'io server disconnect');
+    assert.equal(previous.connected, false); pass('reconnect revokes the old subscriber across instances');
+    const capRoom = `${room}-capacity`;
+    for (let index=0; index<6; index++) {
+      const participant = await connect(index%2 ? secondary : base); sockets.push(participant);
+      assert((await ack(participant, 'join-call', capRoom, `Participant ${index+1}`, {})).ok);
+    }
+    const overflow = await connect(secondary); sockets.push(overflow);
+    const denied = await ack(overflow, 'join-call', capRoom, 'Seventh participant', {});
+    assert.equal(denied.ok, undefined);
+    assert.equal(denied.error, 'This meeting is full (6 participants).');
+    assert((await ack(overflow, 'join-call', `${room}-other`, 'Different room', {})).ok);
+    pass('six-participant cap across instances leaves rejected sockets free to join another room');
     result = await request('/api/v1/ice'); assert(Array.isArray(result.data.iceServers)); pass('ICE configuration');
     result = await request('/api/not-a-route'); assert.equal(result.status, 404); pass('unknown API returns JSON 404');
     console.log(`${checks} end-to-end checks passed.`); return checks;

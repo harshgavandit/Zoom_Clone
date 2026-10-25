@@ -174,12 +174,18 @@ io.on('connection',socket=>{
       await transaction.query('SELECT pg_advisory_xact_lock(hashtext($1))',[room]);
       // A reconnect replaces this tab's previous lease, including after an
       // abrupt function shutdown that could not run disconnect cleanup.
-      await transaction.query('DELETE FROM zoom_presence WHERE client_id=$1 OR expires_at<now()',[clientId]);
+      const replaced=await transaction.query('DELETE FROM zoom_presence WHERE client_id=$1 OR expires_at<now() RETURNING socket_id,client_id',[clientId]);
       const count=await transaction.query('SELECT count(*)::int AS count FROM zoom_presence WHERE room=$1',[room]);
       if(count.rows[0].count>=6){await transaction.query('ROLLBACK');return ack({error:'This meeting is full (6 participants).'});}
       await transaction.query(`INSERT INTO zoom_presence(socket_id,client_id,room,username,state,expires_at) VALUES($1,$2,$3,$4,$5,now()+interval '90 seconds')`,[socket.id,clientId,room,username.trim(),state]);
       await transaction.query('COMMIT');
       committed=true;
+      // Presence replacement must also revoke the old live subscription. A
+      // deleted row alone leaves the old socket receiving room broadcasts and
+      // lets repeated reconnects exceed the subscriber count in the database.
+      for(const previous of replaced.rows) {
+        if(previous.client_id===clientId&&previous.socket_id!==socket.id) io.in(previous.socket_id).disconnectSockets(true);
+      }
       await socket.join(room);
       if(!socket.connected) throw new Error('Participant disconnected during admission');
       socket.data.room=room;socket.data.username=username.trim();socket.data.state=state;
